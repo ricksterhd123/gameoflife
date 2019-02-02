@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Conway's game of life</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <canvas id="gameBoard"></canvas>
+        <script src="/jquery.js"></script>
+
+        <!-- Do some drawing stuff here -->
+        <script>
+            const padding = 50;
+
+            // Board width/height in cells.
+            const MAX_W = 10;
+            const MAX_H = 10;
+
+            // Symbols for each cell board
+            const ALIVE = true;
+            const DEAD = null;
+
+            /*
+            * Game logic
+            */
+
+            let gameBoard = [...Array(MAX_H)].map(e => Array(MAX_W));
+
+            /*
+            * Cell logic
+            */
+
+            function isCellAlive(x, y)
+            {
+                return gameBoard[y][x] == ALIVE;
+            }
+
+            // Only kill cells which are alive
+            function cellDie(x, y){
+                gameBoard[y][x] = (isCellAlive(x, y)) ? DEAD ; ALIVE;
+            }
+
+            function cellNumberOfNeighbours(x, y)
+            {
+                let total = 0;
+                let index = [[x-1, y+1], [x, y+1], [x+1, y+1], [x-1, y], [x+1, y], [x-1, y-1], [x, y-1], [x+1, y-1]]
+                for (let i = 0; i <= index.length; i++)
+                {
+                    let nbrX = index[i][0];
+                    let nbrY = index[i][1];
+
+                    if (isCellAlive(nbrX, nbrY))
+                        total += 1;
+                }
+
+                return total;
+            }
+
+            /*
+            * Automata
+            */
+
+            /*
+            * Drawing
+            */
+
+            // Set canvas size to window size
+            function canvasSetFullscreen(ctx){
+                let width = $(window).width() - padding;
+                let height = $(window).height() - padding;
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+            }
+            // Draw canvas grid
+            function canvasDrawGrid(ctx){
+                ctx.moveTo(0, 0);
+                ctx.lineTo(ctx.canvas.width, ctx.canvas.height);
+                ctx.stroke();
+            }
+
+            // TODO: Draw a cell at x, y on the board.
+            function canvasDrawCell(ctx, x, y){
+                return -1;
+            }
+
+            // TODO: Draw game of life on canvas
+            function canvasDrawGame(ctx){
+                // Set to fullscreen
+                canvasSetFullscreen(ctx);
+                // Draw grid
+                canvasDrawGrid(ctx);
+                // Draw cells from current state
+            }
+
+            /*
+            * Events
+            */
+            // When the window is resized, resize the canvas.
+            function onWindowResize(){
+                let c = document.getElementById("gameBoard");
+                let ctx = c.getContext("2d");
+                canvasSetFullscreen(ctx);
+                canvasDrawGame(ctx);
+            }
+            $(window).on('resize', onWindowResize);
+
+            /*
+            * Main
+            */
+            let c = document.getElementById("gameBoard");
+            let ctx = c.getContext("2d");
+            canvasDrawGame(ctx);
+        </script>
+    </body>
+</html>
