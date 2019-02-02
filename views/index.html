@@ -5,14 +5,27 @@
     </head>
     <body>
         <canvas id="gameBoard" width="200" height="100"></canvas>
-
+        <script src="/jquery.js"></script>
         <!-- Do some drawing stuff here -->
         <script>
             let c = document.getElementById("gameBoard");
             let ctx = c.getContext("2d");
-            ctx.moveTo(0,0);
-            ctx.lineTo(200,100);
-            ctx.stroke();
+            let width = $(window).width();
+            let height = $(window).height();
+            let lastW = -1;
+            let lastH = -1;
+
+                if (height != lastH && width != lastW)
+                {
+                    ctx.canvas.width = width;
+                    ctx.canvas.height = height;
+                    ctx.moveTo(0,0);
+                    ctx.lineTo(width, height);
+                    // Remember values after
+                    lastH = height;
+                    lastW = width;
+                    ctx.stroke();
+                }
         </script>
     </body>
 </html>
