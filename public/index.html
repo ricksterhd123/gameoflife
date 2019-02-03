@@ -10,15 +10,33 @@
 
         <!-- Do some drawing stuff here -->
         <script>
-            const padding = 50;
+            const padding = 100;
 
             // Board width/height in cells.
-            const MAX_W = 10;
-            const MAX_H = 10;
+            const MAX_W = 100;
+            const MAX_H = 100;
 
             // Symbols for each cell board
             const ALIVE = true;
             const DEAD = null;
+
+            function relMouseCoords(event){
+                let totalOffsetX = 0;
+                let totalOffsetY = 0;
+                let canvasX = 0;
+                let canvasY = 0;
+                let currentElement = this;
+
+                do{
+                    totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+                    totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+                } while(currentElement = currentElement.offsetParent)
+
+                canvasX = event.pageX - totalOffsetX;
+                canvasY = event.pageY - totalOffsetY;
+                return {x:canvasX, y:canvasY}
+            }
+            HTMLCanvasElement.prototype.relMouseCoords = relMouseCoords;
 
             /*
             * Game logic
@@ -30,35 +48,52 @@
             * Cell logic
             */
 
-            function isCellAlive(x, y)
-            {
-                return gameBoard[y][x] == ALIVE;
-            }
+            function isCellAlive(x, y) { return gameBoard[y][x] == ALIVE; }
+            function isCellDead(x, y) { return gameBoard[y][x] == DEAD; }
+            function cellDie(x, y){ gameBoard[y][x] = ((isCellAlive(x, y)) ? DEAD : ALIVE); }
+            function cellRevive(x, y){ gameBoard[y][x] = ((isCellDead(x, y)) ? ALIVE : DEAD); }
 
-            // Only kill cells which are alive
-            function cellDie(x, y){
-                gameBoard[y][x] = (isCellAlive(x, y)) ? DEAD ; ALIVE;
-            }
-
-            function cellNumberOfNeighbours(x, y)
-            {
+            // Get the number of neighbours around the cell.
+            function cellNumberOfNeighbours(x, y){
                 let total = 0;
-                let index = [[x-1, y+1], [x, y+1], [x+1, y+1], [x-1, y], [x+1, y], [x-1, y-1], [x, y-1], [x+1, y-1]]
-                for (let i = 0; i <= index.length; i++)
-                {
-                    let nbrX = index[i][0];
-                    let nbrY = index[i][1];
+                let nbrs = [[x-1, y+1], [x, y+1], [x+1, y+1], [x-1, y],
+                             [x+1, y], [x-1, y-1], [x, y-1], [x+1, y-1]];
+                for (let i = 0; i <= nbrs.length - 1; i++){
+                    let nbrX = nbrs[i][0];
+                    let nbrY = nbrs[i][1];
 
-                    if (isCellAlive(nbrX, nbrY))
+                    // // Wrap back around the board
+                    // nbrX = (nbrX < 0) ? MAX_W - 1 : nbrX % MAX_W;
+                    // nbrY = (nbrY < 0) ? MAX_H - 1 : nbrY % MAX_H;
+                    let valid = nbrX >= 0 && nbrY >= 0 && nbrX <= MAX_W-1 && nbrY <= MAX_H-1;
+                    if (valid && isCellAlive(nbrX, nbrY))
                         total += 1;
                 }
 
                 return total;
             }
 
+            // Update the cell state
+            function cellUpdate(x, y){
+                let numberOfNbrs = cellNumberOfNeighbours(x, y);
+                let alive = isCellAlive(x, y);
+                if (numberOfNbrs == 0 && !alive)
+                if (alive && numberOfNbrs < 2) {cellDie(x, y)}
+                if (alive && numberOfNbrs > 3) {cellDie(x, y)}
+                if (!alive && numberOfNbrs >= 2 && numberOfNbrs <= 3) {cellRevive(x, y)}
+            }
+
             /*
             * Automata
             */
+
+            function boardUpdate(){
+                for (let y = 0; y <= MAX_H - 1; y++){
+                    for (let x = 0; x <= MAX_W - 1; x++){
+                        cellUpdate(x, y);
+                    }
+                }
+            }
 
             /*
             * Drawing
@@ -71,16 +106,46 @@
                 ctx.canvas.width = width;
                 ctx.canvas.height = height;
             }
+
             // Draw canvas grid
             function canvasDrawGrid(ctx){
-                ctx.moveTo(0, 0);
-                ctx.lineTo(ctx.canvas.width, ctx.canvas.height);
-                ctx.stroke();
+                let cellWidth = parseInt(ctx.canvas.width / MAX_W);
+                //let cellHeight = parseInt(ctx.canvas.height / MAX_H);
+                let cellHeight = cellWidth
+
+                for (let y = 0; y <= MAX_H + 1; y++)
+                {
+                    ctx.moveTo(0, y * cellHeight);
+                    ctx.lineTo(ctx.canvas.width, y * cellHeight)
+                    ctx.stroke();
+                }
+
+                for (let x = 0; x <= MAX_W + 1; x++)
+                {
+                    ctx.moveTo(x * cellWidth, 0);
+                    ctx.lineTo(x * cellWidth, ctx.canvas.height)
+                    ctx.stroke();
+                }
             }
 
             // TODO: Draw a cell at x, y on the board.
             function canvasDrawCell(ctx, x, y){
-                return -1;
+                let cellWidth = parseInt(ctx.canvas.width / MAX_W);
+                //let cellHeight = parseInt(ctx.canvas.height / MAX_H);
+                let cellHeight = cellWidth
+
+                let startX = cellWidth * x;
+                let startY = cellHeight * y;
+                ctx.fillRect(startX, startY, cellWidth, cellHeight);
+            }
+
+            function canvasDrawBoard(ctx, width, height){
+                for (let y = 0; y <= height - 1; y++){
+                    for (let x = 0; x <= width - 1; x++){
+                        if (isCellAlive(x, y))
+                            canvasDrawCell(ctx, x, y);
+                    }
+                }
             }
 
             // TODO: Draw game of life on canvas
@@ -88,8 +153,16 @@
                 // Set to fullscreen
                 canvasSetFullscreen(ctx);
                 // Draw grid
-                canvasDrawGrid(ctx);
+                //canvasDrawGrid(ctx);
                 // Draw cells from current state
+                canvasDrawBoard(ctx, MAX_W, MAX_H);
+            }
+
+            function canvasUpdate()
+            {
+                let c = document.getElementById("gameBoard");
+                let ctx = c.getContext("2d");
+                canvasDrawGame(ctx);
             }
 
             /*
@@ -100,16 +173,43 @@
                 let c = document.getElementById("gameBoard");
                 let ctx = c.getContext("2d");
                 canvasSetFullscreen(ctx);
-                canvasDrawGame(ctx);
+                // canvasDrawGame(ctx);
             }
             $(window).on('resize', onWindowResize);
+
+
+            let c = document.getElementById("gameBoard");
+            let ctx = c.getContext("2d");
+            function onCanvasClick(e){
+                let cellWidth = parseInt(ctx.canvas.width / MAX_W);
+                //let cellHeight = parseInt(ctx.canvas.height / MAX_H);
+                let cellHeight = cellWidth
+
+                console.log('Position: ('+ e.clientX +', ' + e.clientY + ')');
+
+
+                let coords = this.relMouseCoords(e)
+                let cellX = parseInt(coords.x / cellWidth);
+                let cellY = parseInt(coords.y / cellHeight);
+                console.log('Cell: ('+ cellX +', '+ cellY +')');
+                cellRevive(cellX, cellY);
+            }
+            $(c).on('click', onCanvasClick)
 
             /*
             * Main
             */
-            let c = document.getElementById("gameBoard");
-            let ctx = c.getContext("2d");
-            canvasDrawGame(ctx);
+
+
+            //
+            // canvasDrawGame(ctx);
+            let drawTimer = setInterval(canvasUpdate, 300)
+            function start(){
+
+                let logicTimer = setInterval(boardUpdate, 100)
+            }
         </script>
+
+        <button onclick="start()">start</button>
     </body>
 </html>
