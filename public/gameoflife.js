@@ -22,11 +22,16 @@ let ctx = canvas.getContext("2d");
 let startBtn = document.createElement("button");
 let stopBtn = document.createElement("button");
 let genCounter = document.createElement("p");
+let resetBtn = document.createElement("button");
+
 genCounter.innerHTML = "";
 startBtn.appendChild(document.createTextNode("Start!"));
+resetBtn.appendChild(document.createTextNode("Reset"));
 stopBtn.appendChild(document.createTextNode("Stop!"));
+
 document.body.appendChild(startBtn);
 document.body.appendChild(stopBtn);
+document.body.appendChild(resetBtn);
 document.body.appendChild(genCounter);
 
 const padding = 100;
@@ -41,8 +46,9 @@ const DEAD = undefined;
 /*
 * Game logic
 */
+function getEmptyBoard(width, height) { return [...Array(height)].map(e => Array(width)); }
 let numberOfGenerations = 0;
-let currentGen= [...Array(MAX_H)].map(e => Array(MAX_W));
+let currentGen = getEmptyBoard(MAX_W, MAX_H);
 
 /*
 * Cell logic
@@ -63,10 +69,10 @@ function cellNumberOfNeighbours(x, y, board){
         let nbrY = nbrs[i][1];
 
         // // Wrap back around the board
-        // nbrX = (nbrX < 0) ? MAX_W - 1 : nbrX % MAX_W;
-        // nbrY = (nbrY < 0) ? MAX_H - 1 : nbrY % MAX_H;
-        let valid = nbrX >= 0 && nbrY >= 0 && nbrX <= MAX_W-1 && nbrY <= MAX_H-1;
-        if (valid && isCellAlive(nbrX, nbrY, board))
+        nbrX = (nbrX < 0) ? MAX_W - 1 : nbrX % MAX_W;
+        nbrY = (nbrY < 0) ? MAX_H - 1 : nbrY % MAX_H;
+        //let valid = nbrX >= 0 && nbrY >= 0 && nbrX <= MAX_W-1 && nbrY <= MAX_H-1;
+        if (isCellAlive(nbrX, nbrY, board))
             total += 1;
     }
 
@@ -77,8 +83,9 @@ function cellNumberOfNeighbours(x, y, board){
 function cellUpdate(x, y, currGen, newGen){
     let numberOfNbrs = cellNumberOfNeighbours(x, y, currGen);   // Use the currGen to count the neighbours and update newGen
     let alive = isCellAlive(x, y, currGen);
-    if (alive && numberOfNbrs <= 1) {cellDie(x, y, newGen)}
-    if (alive && numberOfNbrs >= 4) {cellDie(x, y, newGen)}
+    // if (alive && numberOfNbrs <= 1) {cellDie(x, y, newGen)}
+    // if (alive && numberOfNbrs >= 4) {cellDie(x, y, newGen)}
+    if (alive && numberOfNbrs >= 2 && numberOfNbrs <= 3) { cellRevive(x, y, newGen); }
     if (!alive && numberOfNbrs == 3) {cellRevive(x, y, newGen)}
 }
 
@@ -86,7 +93,7 @@ function cellUpdate(x, y, currGen, newGen){
 * Automata
 */
 function boardUpdate(){
-    let newGen = currentGen.slice();   // Copy the current generation
+    let newGen = getEmptyBoard(MAX_W, MAX_H);   // Copy the current generation
 
     // Update the newGen from the currentGen
     for (let y = 0; y <= MAX_H - 1; y++){
@@ -100,6 +107,9 @@ function boardUpdate(){
     genCounter.innerHTML = "Gen: " + (numberOfGenerations++).toString();
 }
 
+function boardClear(){
+    currentGen = [...Array(MAX_H)].map(e => Array(MAX_W));
+}
 /*
 * Drawing
 */
@@ -197,13 +207,13 @@ function onCanvasClick(e){
 }
 $(canvas).on('click', onCanvasClick);
 
-let drawTimer = setInterval(canvasUpdate, 80);
+let drawTimer = setInterval(canvasUpdate, 20);
 let logicTimer = false;
 
 // Start button click event
 function start(){
     if (!logicTimer)
-        logicTimer = setInterval(boardUpdate, 300);
+        logicTimer = setInterval(boardUpdate, 20);
 }
 $(startBtn).on("click", start);
 
@@ -214,6 +224,14 @@ function stop(){
     }
 }
 $(stopBtn).on("click", stop);
+
+function reset(){
+    stop();
+    boardClear();
+    numberOfGenerations = 0;
+    genCounter.innerHTML = "";
+}
+$(resetBtn).on("click", reset);
 /*
 *   Main
 */
