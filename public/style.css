@@ -1,6 +1,10 @@
 canvas {
-
     padding: 0;
     margin: 20px;
     display: block;
+}
+
+p {
+    display: inline;
+    padding: 20px;
 }
