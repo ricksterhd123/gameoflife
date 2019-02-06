@@ -2,6 +2,7 @@
 - Using Node/Express.js & anything else I deem useful
 
 ## TODO:
-- learn to use JS OOP
-- Algorithm optimization
-- Do the simulation server-side and use AJAX for each client.
+- [x] learn to use JS OOP
+- [] Learn express.js and make the game of life API (or find a better way)
+- [] Get models, views and routing working.
+- [] Algorithm optimization
