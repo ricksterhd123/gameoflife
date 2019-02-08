@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var Board = require('../models/board');
 
 /*
 ==TODO: Game of life board API==
@@ -9,7 +10,10 @@ var router = express.Router();
 */
 
 router.get('/', function(req, res, next) {
-  res.json();
+  let b = new Board(100, 100);
+  b.cellRevive(0,0);
+  b.cellRevive(99,99);
+  res.json(b.getAliveCells());
 });
 
 module.exports = router;

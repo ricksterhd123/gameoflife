@@ -191,6 +191,7 @@ $(window).on('resize', onWindowResize);
 
 // Canvas click event
 function onCanvasClick(e){
+
     let cellWidth = parseInt(ctx.canvas.width / MAX_W);
     //let cellHeight = parseInt(ctx.canvas.height / MAX_H);
     let cellHeight = cellWidth
@@ -203,7 +204,7 @@ function onCanvasClick(e){
     let cellY = parseInt(coords.y / cellHeight);
     console.log('Cell: ('+ cellX +', '+ cellY +')');
     cellRevive(cellX, cellY, currentGen);
-
+    socket.emit('clicked', {x:cellX, y:cellY});
 }
 $(canvas).on('click', onCanvasClick);
 

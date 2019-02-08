@@ -1,9 +1,10 @@
 /*
-* Board data structure
+* Board abstract data structure
 */
 const ALIVE = true;
 const DEAD = undefined;
 
+// Board object constructor
 function Board(width, height){
     this.width = width;
     this.height = height;
@@ -13,6 +14,7 @@ function Board(width, height){
     this.cellRevive = function (x, y) { this.state[y][x] = ALIVE; }
 }
 
+// Returns an array of alive cells (easier to send)
 Board.prototype.getAliveCells =
 function (){
     let alive = [];
@@ -25,6 +27,7 @@ function (){
     return alive;
 }
 
+// Count the total number of neighbours around a particular cell on the board.
 Board.prototype.cellNumberOfNeighbours =
 function (x, y){
     let total = 0;
@@ -45,9 +48,10 @@ function (x, y){
     return total;
 }
 
+// Draw the cell's successor (next generation) on a new board
 Board.prototype.cellUpdate =
 function (x, y, newBoard){
-    let numberOfNbrs = this.cellNumberOfNeighbours(x, y);   // Use the currGen to count the neighbours and update newGen
+    let numberOfNbrs = this.cellNumberOfNeighbours(x, y);   // Use the current board to count the neighbours and update newGen
     let alive = this.isCellAlive(x, y);
 
     // if (alive && numberOfNbrs <= 1) {cellDie(x, y, newGen)}
@@ -56,6 +60,7 @@ function (x, y, newBoard){
     if (!alive && numberOfNbrs == 3) { newBoard.cellRevive(x, y) }
 }
 
+// Evolve the cells on the board
 Board.prototype.update =
 function (){
     let newBoard = new Board(this.width, this.height);
@@ -69,3 +74,5 @@ function (){
 
     this.state = newBoard.state;
 }
+
+module.exports = Board;
