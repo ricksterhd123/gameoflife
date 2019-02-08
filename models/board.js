@@ -12,6 +12,13 @@ function Board(width, height){
     this.isCellAlive = function (x, y) { return this.state[y][x] == ALIVE; }
     this.cellKill = function (x, y) { this.state[y][x] = DEAD; }
     this.cellRevive = function (x, y) { this.state[y][x] = ALIVE; }
+    this.generation = 0;
+}
+
+Board.prototype.clear =
+function (){
+    this.state = [...Array(this.height)].map(e => Array(this.width));
+    this.generation = 0;
 }
 
 // Returns an array of alive cells (easier to send)
@@ -73,6 +80,7 @@ function (){
     }
 
     this.state = newBoard.state;
+    this.generation++;
 }
 
 module.exports = Board;
